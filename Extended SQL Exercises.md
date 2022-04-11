@@ -254,5 +254,5 @@ WHERE P.monthID = M.monthID
 GROUP BY month, city
 ```
 ### 4.2
-In September 2004, including only the properties in the province of Turin, select the total number of free properties for each city and week, the ratio of the total number of free properties for each city and week and the total number of free properties for the same week.
+In September 2004, including only the properties in the province of Turin, select the total number of free properties for each city and week, the ratio of the total number of free properties for each city and week and the total number of free properties for the same week.  
 Give a rank according to the total number of free properties (rank 1st the highest number). Sort the data according to the rank.
