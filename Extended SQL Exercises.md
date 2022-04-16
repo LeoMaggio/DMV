@@ -34,8 +34,7 @@ Show, for each province
 - The total sale amount for the province
 - The rank of the province according to its total sale amount, separately for each region
 ```sql
-SELECT Province,
-  Region,
+SELECT Province, Region,
   SUM(TotAmount),
   RANK() OVER(PARTITION BY Region
               ORDER BY SUM(TotAmount) DESC) AS RANK_TotAmount
@@ -51,9 +50,7 @@ Show, for each province and month
 - The total sale amount for the province in the current month
 - The rank of the province according to its total sale amount, separately for each moth
 ```sql
-SELECT Province,
-  Region,
-  Month,
+SELECT Province, Region, Month,
   SUM(TotAmount),
   RANK() OVER(PARTITION BY Month
               ORDER BY SUM(TotAmount) DESC) AS RANK_TotAmount
@@ -69,8 +66,7 @@ Show, for each region and month
 - The total sale amount for the region in the current month
 - The cumulative sale amount for increasing months, separately for each region
 ```sql
-SELECT Region,
-  Month,
+SELECT Region, Month,
   SUM(TotAmount),
   SUM(SUM(TotAmount)) OVER(PARTITION BY Region
                            ORDER BY Month
@@ -97,8 +93,7 @@ Show, for each object
 - The object rank according to its total rentals
 - The object rank according to its total income
 ```sql
-SELECT ObjectID,
-  ObjectType,
+SELECT ObjectID, ObjectType,
   COUNT(*) AS TotalRentals,
   SUM(Price) AS TotalIncome
   RANK() OVER(ORDER BY COUNT(*) DESC) AS RANK_TotalRentals,
@@ -116,9 +111,7 @@ Show, for each object and month
 - the object rank according to its total monthly income, separately for each month
 
 ```sql
-SELECT ObjectID,
-  ObjectType,
-  Month,
+SELECT ObjectID, ObjectType, Month,
   COUNT(*) AS TotalRentals,
   SUM(Price) AS TotalIncome
   RANK() OVER(PARTITION BY Month
@@ -143,8 +136,7 @@ STOREHOUSES (storehouseID, storehouse, city, province, region)
 ### 3.1
 In the first trimester of 2003, regarding the storehouses in Turin, select the total value of the products stored in each storehouse at any given date, and select the average daily total value of the products in each storehouse during the previous week (including the current date).
 ```sql
-SELECT storehouse,
-  date,
+SELECT storehouse, date,
   SUM(totValue),
   AVG(SUM(totValue)) OVER(PARTITION BY storehouse
                           ORDER BY date
@@ -159,8 +151,7 @@ GROUP BY storehouseID, storehouse, date
 ### 3.2
 In 2004, for each city and date, select the percentage of daily free surface of the storehouses. Give a rank to the results (rank 1 is the lowest percentage).
 ```sql
-SELECT city,
-  date,
+SELECT city, date,
   SUM(m2free) / SUM(m2tot) * 100,
   RANK() OVER(ORDER BY SUM(m2free) / SUM(m2tot) ASC)
 FROM SURFACE S, TIME T, STOREHOUSES H
@@ -172,8 +163,7 @@ GROUP BY city, date
 ### 3.3
 In the first 6 months of 2004, select the percentage of free surface for each storehouse and date.
 ```sql
-SELECT storehouse,
-  date,
+SELECT storehouse, date,
   SUM(m2free) / SUM(m2tot) * 100
 FROM SURFACE S, TIME T, STOREHOUSES H
 WHERE S.storehouseID = H.storehouseID
@@ -184,8 +174,7 @@ GROUP BY storehouseID, storehouse, date
 ### 3.4
 In 2003, select the average daily total value of products for each storehouse and month.
 ```sql
-SELECT DISTINCT storehouse,
-  month,
+SELECT DISTINCT storehouse, month,
   AVG(SUM(totValue)) OVER(PARTITION BY storehouse, month)
 FROM PRODUCTS P, TIME T, STOREHOUSES H
 WHERE P.storehouseID = H.storehouseID
@@ -207,8 +196,7 @@ GROUP BY region, date
 ### 3.6
 In 2004, select the average percentage of daily free surface for each month and region.
 ```sql
-SELECT DISTINCT month,
-  region,
+SELECT DISTINCT month, region,
   AVG(SUM(m2free) / SUM(m2tot) * 100) OVER(PARTION BY month, region)
 FROM SURFACE S, TIME T, STOREHOUSES H
 WHERE S.storehouseID = H.storehouseID
@@ -240,10 +228,9 @@ Surface_Range(surfaceRangeID, surfaceMin, surfaceMax)
 ### 4.1
 In 2004, including only the properties in cities where universities are present, select the average monthly rent cost for each city and month and the average monthly rent cost since the beginning of the year for each city and month.
 ```sql
-SELECT month,
-  city,
+SELECT month, city,
   SUM(totPrice)/SUM(numProperties),
-  (SUM(SUM(totPrice))/SUM(SUM(numProperties))) OVER(PARTITION BY City
+  (SUM(SUM(totPrice))/SUM(SUM(numProperties))) OVER(PARTITION BY city
                                                     ORDER BY month
                                                     ROWS UNBOUNDED PRECEDING)
 FROM Properties P, Location L, Month M
@@ -256,3 +243,86 @@ GROUP BY month, city
 ### 4.2
 In September 2004, including only the properties in the province of Turin, select the total number of free properties for each city and week, the ratio of the total number of free properties for each city and week and the total number of free properties for the same week.  
 Give a rank according to the total number of free properties (rank 1st the highest number). Sort the data according to the rank.
+```sql
+SELECT week, city,
+  SUM(numProperties),
+  SUM(numProperties)/SUM(SUM(numProperties)) OVER(PARTITION BY week),
+  RANK() OVER(ORDER BY SUM(numProperties) DESC) AS Position
+FROM Properties P, Location L, Month M, Week W
+WHERE P.weekID = W.weekID
+  AND P.monthID = M.monthID
+  AND P.locationID = L.locationID
+  AND year = 2004
+  AND month = 'September'
+  AND province = 'Turin'
+GROUP BY week, city
+ORDER BY Position
+```
+### 4.3
+In summer 2005, including only the attics with bed, fridge, and table in Rome, for each city area (district) and for each range of the monthly rent price, select the average number of users per each property who have added the property in their favorite list, and select the average number of users per each property of the city area who have added the property in their favorite list. Order the results according to the city area and the average number of users.
+```sql
+SELECT district, priceMin, priceMax,
+  SUM(numUsers)/SUM(numProperties) AS avgInterestedUsers,
+  (SUM(SUM(numUsers))/SUM(SUM(numProperties))) OVER(PARTITION BY district)
+FROM Favorites F, Location L, Month M, Season S, Furniture Fu, Type T, Price_Range PR
+WHERE F.seasonID = S.seasonID
+  AND F.monthID = M.monthID
+  AND F.locationID = L.locationID
+  AND F.furnitureID = Fu.furnitureID
+  AND F.typeID = T.typeID
+  AND F.priceID = PR.priceID
+  AND year = 2005
+  AND season = 'summer'
+  AND type = 'attic'
+  AND city = 'Rome'
+  AND bed = TRUE AND fridge = TRUE AND table = TRUE
+GROUP BY district, priceMin, priceMax
+ORDER BY district, avgInterestedUsers
+```
+### 4.4
+Including only the properties with bed and table in cities where universities are present, select the average monthly rent cost per property for each city, month, and year, select the average monthly rent cost per square meter for each city, month, and year, and select the average monthly rent cost per property of the city since the beginning of the year for each city, month, and year.
+```sql
+SELECT city, month, year,
+  SUM(totPrice)/SUM(numProperties),
+  SUM(totPrice)/SUM(totSurface),
+  (SUM(SUM(totPrice))/SUM(SUM(numProperties))) OVER(PARTITION BY city, year
+                                                    ORDER BY month
+                                                    ROWS UNBOUNDED PRECEDING)
+FROM Properties P, Location L, Month M, Furniture Fu
+WHERE P.monthID = M.monthID
+  AND P.locationID = L.locationID
+  AND P.furnitureID = Fu.furnitureID
+  AND university = TRUE
+  AND bed = TRUE AND table = TRUE
+GROUP BY city, month, year
+```
+### 4.5
+Including only the properties in Piedmont (region), in September, October, and November 2004, select for each city the average monthly rent cost per property and the average monthly rent cost per property of the province in which the city is located.
+```sql
+SELECT city
+  SUM(totPrice)/SUM(numProperties),
+  (SUM(SUM(totPrice))/SUM(SUM(numProperties))) OVER(PARTITION BY province)
+FROM Properties P, Location L, Month M
+WHERE P.monthID = M.monthID
+  AND P.locationID = L.locationID
+  AND P.furnitureID = Fu.furnitureID
+  AND year = 2004
+  AND region = 'Piedmont'
+  AND month >= 9 AND month <= 11
+GROUP BY city
+```
+### 4.6
+In 2004, including only the properties with bed and table in cities where universities are present, select the average monthly rent cost per property for each city and month, and the average monthly rent cost per square meter for each city and month.
+```sql
+SELECT city, month,
+  SUM(totPrice)/SUM(numProperties),
+  SUM(totPrice)/SUM(totSurface)
+FROM Properties P, Location L, Month M, Furniture Fu
+WHERE P.monthID = M.monthID
+  AND P.locationID = L.locationID
+  AND P.furnitureID = Fu.furnitureID
+  AND year = 2004
+  AND university = TRUE
+  AND bed = TRUE AND table = TRUE
+GROUP BY city, month
+```
