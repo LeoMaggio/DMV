@@ -326,3 +326,142 @@ WHERE P.monthID = M.monthID
   AND bed = TRUE AND table = TRUE
 GROUP BY city, month
 ```
+## 5. Hotel
+**FACTS**
+```
+Rooms(Features_id, Time_id, Hotel_id, 
+  total, free, reserved, unavailable, income)
+```
+**DIMENSIONS**
+```
+Features(Features_id, features, shower, refrigerator, whirpool, satellite_TV)
+Time(Time_id, day, month, holiday, day_of_week, year)
+Hotel(Hotel_id, hotel_name, category, provice, region, state)
+```
+### 5.1
+In 2005, for each state and month, analyze the portion of rooms which are reserved, free, and unavailable.
+```sql
+SELECT state, month,
+  SUM(reserved)/SUM(total)*100,
+  SUM(free)/SUM(total)*100,
+  SUM(unavailable)/SUM(total)*100
+FROM Rooms R, Hotel H, Time T
+WHERE R.Hotel_id = H.Hotel_id
+  AND R.Time_id = T.Time_id
+  AND year = 2005
+GROUP BY state, month
+```
+### 5.2
+In 2005, for each state, analyze the portion of rooms which are reserved. Associate a rank to each state according to the portion of reserved rooms for that state in 2005 with respect to all the rooms for that state. The state with the highest ratio of reserved rooms in 2005 must rank first.
+```sql
+SELECT state,
+  SUM(reserved)/SUM(total)*100,
+  RANK() OVER(ORDER BY SUM(reserved)/SUM(total) DESC) AS RankState
+FROM Rooms R, Hotel H, Time T
+WHERE R.Hotel_id = H.Hotel_id
+  AND R.Time_id = T.Time_id
+  AND year = 2005
+GROUP BY state
+ORDER BY RankState ASC
+```
+### 5.3
+In 2005, for each state and month, analyze the income of 4-star hotels and thecumulative income of 4-star hotels.
+```sql
+SELECT state, month,
+  SUM(income),
+  SUM(SUM(income)) OVER(PARTITION BY state
+                        ORDER BY month
+                        ROWS UNBOUNDED PRECEDING)
+FROM Rooms R, Hotel H, Time T
+WHERE R.Hotel_id = H.Hotel_id
+  AND R.Time_id = T.Time_id
+  AND year = 2005
+  AND category = 4
+GROUP BY state, month
+```
+### 5.4
+For each state and year, analyze the total income of public holidays.
+```sql
+SELECT state, year,
+  SUM(income)
+FROM Rooms R, Hotel H, Time T
+WHERE R.Hotel_id = H.Hotel_id
+  AND R.Time_id = T.Time_id
+  AND holiday = TRUE
+GROUP BY state, year
+```
+### 5.5
+In 2005, for each hotel, analyze the total income of the rooms with satellite TV and whirlpool bath.
+```sql
+SELECT R.hotel_id, hotel_name,
+  SUM(income)
+FROM Rooms R, Hotel H, Time T, Features F
+WHERE R.Hotel_id = H.Hotel_id
+  AND R.Time_id = T.Time_id
+  AND R.Feature_id = F.Feature_id
+  AND year = 2005
+  AND satellite_TV = TRUE AND whirlpool_bath = TRUE
+GROUP BY R.hotel_id, hotel_name
+```
+## 6. PC
+**FACTS**
+```
+Assembling(timeIdA, componentId, 
+  #components, cost, delivery_cost)
+Sales(confId, retId, timeIdS, 
+  production_cost, selling_price, #PC_sold, #defective_PC_returned)
+```
+**DIMENSIONS**
+```
+TimeAss(timeIdA, m, 2m, 4m, 6m, year)
+Component(componentId, code, component_type, memory_capacity*, type*, access_time*, resolution*, supplName, supplier_region, supplier_area)
+Configuration(confId, RAM_code, HD_code, CPU_code, graphicBoard_Code, RAM_supplier, HD_supplier, CPU_supplier, graphicBoard_supplier) (or *_code as ids)
+Supplier(suppId, nameS)
+Retailer(retId, nameR, #shops)
+TimeSales(timeIdS, m, 2m, 3m, year)
+```
+### 6.1
+Considering only 2002, for each configuration whose RAM has been bought from the “IntelligenceDevice” supplier, select the percentage of defective products with respect to the total number of sold products.
+```sql
+SELECT confId,
+  SUM(#defective_PC_returned)/SUM(#PC_sold)*100
+FROM Sales S, TimeSales TS, Configuration C, Supplier CS
+WHERE S.confId = C.confId
+  AND S.timeIdS = TS.timeIdS
+  AND C.RAM_supplier = CS.suppId
+  AND year = 2002
+  AND CS.nameS = “IntelligenceDevice”
+GROUP BY confId
+```
+### 6.2
+Considering only 2007 and RAM components, for each four-month period select the total cost (component cost + delivery cost) and the cumulative cost since the beginning of the year, separately for each geographical area and RAM type.
+```sql
+SELECT 4m, component_type, supplier_area,
+  SUM(cost)+SUM(delivery_cost),
+  SUM(SUM(cost)) OVER(PARTITION BY component_type, supplier_area
+                      ORDER BY 4m
+                      ROWS UNBOUNDED PRECEDING DESC)
+FROM Assembling A, TimeAss TA, Component C
+WHERE A.componentId = C.componentId
+  AND A.timeIdA = TA.timeIdA
+  AND year = 2007
+  AND component_type='RAM'
+GROUP BY 4m, year, component_type, supplier_area
+```
+### 6.3
+Considering only suppliers from which, in 2003, more than 100 000 components have been bought in total, select for each supplier and each component type the number of pieces bought and the total cost in the second two-month period of 2003.
+```sql
+SELECT supplName, type,
+  SUM(#components),
+  SUM(cost)+SUM(delivery_cost)
+FROM Assembling A, TimeAss TA
+WHERE A.timeIdA = TA.timeIdA
+  AND year = 2003
+  AND 2m = '2-2003'
+  AND supplName IN (SELECT supplName
+                    FROM Assembling A2
+                    WHERE year = 2003
+                    GROUP BY supplName
+                    HAVING SUM(#components) > 100 000)
+GROUP BY supplName, component_type
+```
