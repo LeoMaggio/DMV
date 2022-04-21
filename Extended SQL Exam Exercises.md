@@ -128,7 +128,7 @@ WHERE P.TimeID = D.TimeID
   AND P.StoreID = S.StoreID
 GROUP BY brand, month, year
 ```
-## Februrary 01, 2021
+## February 01, 2021
 ```
 MusicStreaming(TimeID, SongID, PlatformID, NumberOfStreamings, NumberOfLikes)
 Time(TimeID, date, month, 2M, 3M, 6M, year, dayOfTheWeek)
