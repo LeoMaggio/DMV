@@ -128,3 +128,42 @@ WHERE P.TimeID = D.TimeID
   AND P.StoreID = S.StoreID
 GROUP BY brand, month, year
 ```
+## Februrary 01, 2021
+```
+MusicStreaming(TimeID, SongID, PlatformID, NumberOfStreamings, NumberOfLikes)
+Time(TimeID, date, month, 2M, 3M, 6M, year, dayOfTheWeek)
+Song(SongID, Song, album, classic, indie, pop, .., rock)
+UserLocation(UserLocationID, province, region, country)
+```
+For each song and month, compute the following metrics:
+- the total number of streamings
+- the cumulative total number of streamings since the beginning of the year
+- assign a rank to each song, separately for each album, based on the monthly number of streamings (rank 1st the most streamed song of the album for each month)
+```sql
+SELECT song, month,
+  SUM(NumberOfStreamings),
+  SUM(SUM(NumberOfStreamings)) OVER(PARTITION BY songID, year
+                                    ORDER BY month
+                                    ROWS UNBOUNDED PRECEDING)
+  RANK() OVER(PARTITION BY album, month
+              ORDER BY SUM(NumberOfStreamings) DESC)
+FROM MusicStreaming M, Song S, Time T
+WHERE M.SongID = S.SongID
+  AND M.TimeID = T.TimeID
+GROUP BY song, songID, month, year, album
+```
+Separately for each song and province of the user, compute the following metrics:
+- the average number of monthly likes
+- the percentage of the number of likes with respect to the total number of likes received by users in the same country
+- the number of likes of the album in the user province
+```sql
+SELECT song, province,
+  SUM(NumberOfLikes)/COUNT(DISTINCT month)
+  SUM(NumberOfLikes)*100/SUM(SUM(NumberOfLikes)) OVER(PARTITION BY songID, country)
+  SUM(SUM(NumberOfLikes)) OVER(PARTITION BY album, province)
+FROM MusicStreaming M, Song S, Time T, UserLocation U
+WHERE M.SongID = S.SongID
+  AND M.TimeID = T.TimeID
+  AND M.UserLocationId = U.UserLocationId
+GROUP BY song, songID, province, country, album
+```
