@@ -91,3 +91,40 @@ WHERE GM.TimeID = T.TimeID
   AND GM.LocationID = L.LocationID
 GROUP BY ageGroup, city
 ```
+## June 18, 2020
+```
+Purchase(TimeID, StoreID, income, number_of_items_sold)
+Store(StoreID, name, brand, city, region)
+Date (TimeID, date, month, year)
+```
+Separately for each city and month, compute:
+- the total income
+- the percentage of income in each month, with respect to the total of the year
+- inside each region, assign a rank to the cities based on the income (rank 1st the highest income city), separately for each month
+```sql
+SELECT city, month,
+  SUM(income),
+  SUM(income)*100/SUM(SUM(income)) OVER(PARTITION BY city, year),
+  RANK() OVER(PARTITION BY month, region
+              ORDER BY SUM(income) DESC)
+FROM Purchase P, Store S, Date D
+WHERE P.TimeID = D.TimeID
+  AND P.StoreID = S.StoreID
+GROUP BY city, month, year, region
+```
+Separately for each month and brand, compute:
+- the average income per item
+- the daily average number of items
+- the cumulative total number of items since the beginning of the year
+```sql
+SELECT brand, month, year
+  SUM(income)/SUM(number_of_items_sold),
+  SUM(number_of_items_sold)/COUNT(DISTINCT date),
+  SUM(SUM(number_of_items_sold)) OVER(PARTITION BY brand, year
+                                      ORDER BY month
+                                      ROWS UNBOUNDED PRECEDING)
+FROM Purchase P, Store S, Date D
+WHERE P.TimeID = D.TimeID
+  AND P.StoreID = S.StoreID
+GROUP BY brand, month, year
+```
