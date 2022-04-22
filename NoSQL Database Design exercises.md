@@ -180,6 +180,7 @@ parcel{
   locations: [ <string> ]
 }
 # Extended reference pattern for recipient and sender address information. The recipient and sender _ids are required to look up all parcels of a given customer.
+# No collection for the areas, since no data are tracked except their code.
 # Tree pattern for the position. The full list of tree- pattern ancestors is required. The parent ancestor of the tree-pattern is optional.
 ```
 ## 5. Museum exhibitions
