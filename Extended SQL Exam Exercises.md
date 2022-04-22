@@ -167,3 +167,43 @@ WHERE M.SongID = S.SongID
   AND M.UserLocationId = U.UserLocationId
 GROUP BY song, songID, province, country, album
 ```
+## February 15, 2021
+A plant species can be either an indoor or an outdoor plant. A plant species belongs to only one genus and one genus belong to only one family. A garden center can have 0 or more services. There are 4 available services: “parking”, “accessories shop”, “gardening shop” and “greenhouse”. Indoor, greenhouse, accessoryShop, gardenShop, and parking attributes can be “True” or “False”.
+```
+Gardens(TimeID, GardenCenterID, PlantId, numberOfPlants, revenue)
+Time(TimeID, date, month, 2M, 3M, 4M, 6M, year, dayOfTheWeek, holiday)
+GardenCenter(GardenCenterID, GardenCenter, city, province, region, greenhouse, accessoryShop, gardenShop, parking)
+Plant(PlantID, plantSpecies, genus, family, indoor)
+```
+Separately for each plant species and month, compute the following metrics:
+- the daily average number of plants
+- the monthly percentage of the number of plants of the species with respect to the number of plants of the genus
+- the cumulative total number of plants since the beginning of the year
+```sql
+SELECT plantSpecies, month,
+  SUM(numberOfPlants)/COUNT(DISTINCT date),
+  SUM(numberOfPlants)*100/SUM(SUM(numberOfPlants)) OVER(PARTITION BY month, genus),
+  SUM(SUM(numberOfPlants)) OVER(PARTITION BY PlantID, plantSpecies, year
+                                ORDER BY month
+                                ROWS UNBOUNDED PRECEDING)
+FROM Gardens G, Time T, Plant P
+WHERE G.TimeID = T.TimeID
+  AND G.PlantID = P.PlantID
+GROUP BY PlantID, plantSpecies, month, year, genus
+```
+Consider only the garden centers having the “parking” service. Separately for each garden center and plant genus, compute the following metrics:
+- the average revenue per plant
+- the total revenues of the plant family, for each garden center
+- assign a rank to each garden center within its province, based on its total revenues (rank 1st the garden center with the highest revenue in its province for each plant genus)
+```sql
+SELECT GardenCenter, genus,
+  SUM(revenue)/SUM(numberOfPlants),
+  SUM(SUM(revenue)) OVER(PARTITION BY GardenCenter, family),
+  RANK() OVER(PARTITION BY province, genus
+              ORDER BY SUM(revenue) DESC)
+FROM Gardens G, Plant P, GardenCenter C
+WHERE G.PlantID = P.PlantID
+  AND G.GardenCenterID = C.GardenCenterID
+  AND parking = TRUE
+GROUP BY GardenCenter, genus, family, province
+```
