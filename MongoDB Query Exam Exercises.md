@@ -104,3 +104,71 @@ db.measures.aggregate([
   {$project: {"sensor._id": 1, "sensor.city": 1, start: 1}}
 ])
 ```
+## June 17, 2021
+The following document structure represents cameras sold by an e-commerce. Each document collects the aggregated metrics of one day.
+```python
+{ "_id": "nikon_d3500",
+  "model": "D3500",
+  "brand": {
+    "name": "Nikon",
+    "url": "https://www.nikon.it/"
+  }
+  "releaseDate": Date("2018-08-28T00:00:00.000Z"),
+  "category": "DSRL",
+  "price": 435,
+  "specs": {
+    "resolution": 24,
+    "technology": "APS-C CMOS",
+    "min_ISO": 100,
+    "max_ISO": 25600,
+    "weight": 365,
+    "viewfinder": "optical",
+    "video_resolution": "1920 x 1080"
+  },
+  "scores": {
+    "overall": 57,
+    "image_quality": 48,
+    "versatility": 62,
+    "comfort": 85,
+    "speed": 41
+  }
+}
+```
+Write a MongoDB query to display only the model, the price, and the brand name of cameras released in 2021, belonging to the "laser" category, and whose overall score is in the 70-90 range.
+```python
+db.cameras.find(
+  {
+    category: 'laser',
+    releaseDate: {
+      $gte: new Date('2021-01-01'),
+      $lt: new Date('2022-01-01')
+    },
+    'scores.overall': {
+      $gte: 70,
+      $lte: 90
+    }
+  },
+  {model: 1, "brand.name": 1, price: 1, _id: 0}
+)
+```
+Considering only cameras released since 2015, for each release year and for each category, select the median overall score. Use the operator `$year` to extract the year from the date, e.g., `$year: "$releaseDate"`.
+```python
+db.measures.aggregate([
+  {$match: {releaseDate: {$gte: new Date('2015-01-01')}}},
+  {$sort: {'$scores.overall': 1}},
+  {$group: {
+    '_id': {
+      'cat': '$category',
+      'y': { $year: "$releaseDate" }
+    }
+  },
+  {$project: {
+    _id: 1,
+    "median": {
+      $arrayElemAt: ["$value", {
+        $floor: {$multiply: [0.50, {$size: "$value"}]}
+      ]}
+    }
+  }
+])
+```
