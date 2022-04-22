@@ -226,3 +226,49 @@ delivery{
   }
 }
 ```
+## June 17, 2021
+Design a MongoDB database to manage online courses according to the following requirements.
+- Teachers are characterized by their name, surname, email, and list of subjects they can teach (e.g., maths, electronics, etc.). Each teacher can have one or more online profiles on different platforms (e.g., Facebook, LinkedIn, Wikipedia, etc.). For each online profile, if available, the database tracks the corresponding URL of the profile (e.g., https://en.wikipedia.org/wiki/Ranjitsinh_Disale). Note that for each teacher and each platform, at most one profile can exist. A teacher can teach different courses.
+- The courses are characterized by a name, a syllabus, a list of keywords, and the teacher. Each course has several editions. For each edition, the start date, the end date, and the number of enrolled students are known.
+- Given a course, the database must be designed to efficiently provide the name, the surname and the email of its teacher.
+- Furthermore, given a course, the number of editions and the average number of enrolled students in each edition must be efficiently returned.
+- Teachers are typically retrieved by subject (e.g., all those teaching maths), and by online profile platform (e.g., all those having a wikipedia page).
+
+Write a sample document for each collection of the database.
+```python
+teacher{
+  _id: ObjectId(),
+  name: <string>,
+  surname: <string>,
+  email: <string>,
+  subjects : [ <string> ],
+  profile: {
+    facebook: <url>,
+    linkedin: <url>,
+    ...
+  },
+}
+# Polymorphic pattern to track the online profile information in the Teacher collection.
+course: {
+  _id: ObjectId(),
+  name: <string>,
+  syllabus: <string>,
+  keywords: [ <string> ],
+  teacher: {
+    _id: ObjectId(),
+    name: <string>,
+    surname: <string>,
+    email: <string>
+  },
+  editions [{
+    start: <date>,
+    end: <date>,
+    n_students: <number>
+  }],
+  n_editions: <number>,
+  tot_students: <number>
+}
+# Extended reference pattern to track the teacher information associated with each course.
+# Bucket pattern to track when a course is provided.
+# Computed pattern for average students on each edition.
+```
