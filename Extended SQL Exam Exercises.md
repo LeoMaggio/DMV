@@ -207,3 +207,43 @@ WHERE G.PlantID = P.PlantID
   AND parking = TRUE
 GROUP BY GardenCenter, genus, family, province
 ```
+## June 17, 2021
+- For each shipping, the departure and arrival cities, provinces and regions are recorded.
+- For the shipping, the courier agency is recorded. The courier agency has a unique name. Each agency belongs to a Corporate group.
+- The system stores the arrival date, the day of the week and if the day was an holiday or not. It also stores the month, year and semester.
+```
+CourierAgency(CourierAgencyID, CourierAgencyName, CorporateGroup)
+Location(LocationID, city, province, region)
+Time(TimeID, arrivalDate, dayOfTheWeek, holiday, month, 6M, year)
+Shippings(CourierAgencyID, TimeID, ArrivalLocationID, DepartureLocationID, #packages, total_weight)
+```
+Separately for each courier agency and departure city, compute the following metrics:
+- the percentage of packages with respect to the total number of packages of the agency for the departure region
+- the average weight per package
+- assign a rank to each courier agency within its corporate group, based on its total number of packages (rank 1st the courier agency with the highest number of shipped packages in its corporate group for each departure city)
+```sql
+SELECT CourierAgencyName, city,
+  SUM(#packages)*100/SUM(SUM(#packages)) OVER(PARTITION BY CourierAgencyID, region),
+  SUM(total_weight)/SUM(#packages),
+  RANK() OVER(PARTITION BY CorporateGroup, city
+              ORDER BY SUM(#packages) DESC)
+FROM CourierAgency C, Location L, Shippings S
+WHERE S.CourierAgencyID = C.CourierAgencyID
+  AND S.DepartureLocationID = L.LocationID
+GROUP BY CourierAgencyID, CourierAgencyName, DepartureLocationID, city, region, CorporateGroup
+```
+Separately for each month, departure province and arrival province, compute the following metrics:
+- the daily average number of shipped packages
+- the cumulative total weight of delivered packets since the beginning of the semester
+```sql
+SELECT month, L1.province, L2.province, 6M,
+  SUM(#packages)/COUNT(DISTINCT date),
+  SUM(SUM(total_weight)) OVER(PARTITION BY L1.province, L2.province, 6M
+                              ORDER BY month
+                              ROWS UNBOUNDED PRECEDING)
+FROM Time T, Location L1, Location L2, Shippings S
+WHERE S.TimeID = T.TimeID
+  AND S.ArrivalLocationID = L1.LocationID
+  AND S.DepartureLocationID = L2.LocationID
+GROUP BY month, L1.province, L2.province, 6M
+```
