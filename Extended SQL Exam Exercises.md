@@ -290,3 +290,44 @@ WHERE F.CodV = V.CodV
   AND forChildren = 1
 GROUP BY city, bimester, semester
 ```
+## January 28, 2022
+The name of the renting point is unique. The ChildrenBike is True if the bike is for children, False otherwise.
+```
+Bike(CodM, BikeModel, Producer, ChildrenBike)
+RentingPoint(CodP, Name, City, Region)
+Time(CodT, Date, dayOfTheWeek, holiday, month, 2M, 3M, 4M, year)
+Fact(CodM, CodP, CodT, total_rentings, total_rented_bikes, total_income)
+```
+Separately for each Renting Point and trimester, compute:
+- the average number of rented bikes per renting
+- the cumulative total number of rentings since the beginning of the year
+- for each region, assign a rank to the renting points based on the total rentings (rank 1st the highest number), separately for each trimester
+```sql
+SELECT Name, trimester,
+  SUM(total_rented_bikes)/SUM(total_rentings),
+  SUM(SUM(total_rentings)) OVER(PARTITION BY Name, year
+                                ORDER BY trimester
+                                ROWS UNBOUNDED PRECEDING)
+  RANK() OVER(PARTITION BY region, trimester
+              ORDER BY SUM(total_rentings) DESC)
+FROM Fact F, RentingPoint R, Time T
+WHERE F.CodP = R.CodP
+  AND F.CodT = T.CodT
+GROUP BY CodP, Name, trimester, year, region
+```
+Separately for each city, producer, and month, compute:
+- the percentage of incomes in each month and city of each producer, with respect to the producer yearly total for the city
+- the average income per rented bike
+- for each city, assign a rank to the producer based on the income (rank 1st the highest income), separately for each month
+```sql
+SELECT city, producer, month,
+  SUM(total_income)*100/SUM(SUM(total_income)) OVER(PARTITION BY producer, city, year),
+  SUM(total_income)/SUM(total_rented_bikes),
+  RANK() OVER(PARTITION BY city, month
+              ORDER BY SUM(total_income) DESC)
+FROM Fact F, RentingPoint R, Time T, Bike B
+WHERE F.CodP = R.CodP
+  AND F.CodT = T.CodT
+  AND F.CodM = B.CodM
+GROUP BY city, producer, month, year
+```
