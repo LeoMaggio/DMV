@@ -247,3 +247,46 @@ WHERE S.TimeID = T.TimeID
   AND S.DepartureLocationID = L2.LocationID
 GROUP BY month, L1.province, L2.province, 6M
 ```
+## September 01, 2021
+- A video game has a specific name, a specific genre, and it is distributed by a video game company.
+- A videogame can be appropriate for children or not.
+  - The value of this field can be “0” for not appropriate and “1” for appropriate.
+- A store is identified by a unique name. Stores are analyzed according to their city and country.
+- The system records the sales with their date, the day of the week and if the day was an holiday or not. It also records the month, year, bimester, trimester and semester of the sales.
+```
+VideoGame(CodV, videoGameName, forChildren, genre, company)
+Store(CodS, store, city, province, country)
+Time(CodT, date, dayOfTheWeek, holiday, month, bimester, trimester, semester, year)
+Fact(CodV, CodS, CodT, total_revenues, total_sold_videogames)
+```
+Separately for each videogame and store city, compute the following metrics:
+- the percentage of copies of the videogame sold with respect to the total copies sold in the store province
+- assign a rank to each videogame separately for video game company and city, based on its sales (rank 1st the video game with the highest number of sold copies for each city)
+```sql
+SELECT videoGameName, city,
+  SUM(total_sold_videogames)*100/SUM(SUM(total_sold_videogames)) OVER(PARTITION BY CodV, province),
+  RANK() OVER(PARTITION BY company, city
+              ORDER BY SUM(total_sold_videogames) DESC)
+FROM Fact F, VideoGame V, Store S
+WHERE F.CodV = V.CodV
+  AND F.CodS = S.CodS
+GROUP BY CodV, videoGameName, city, province, company
+```
+Separately for each store city and bimester, compute the following metrics, only for the videogames appropriate for children:
+- the cumulative revenues since the beginning of the semester
+- the daily average revenues
+- the percentage of revenues in the bimester with respect to the revenues in the semester, for each city
+```sql
+SELECT city, bimester,
+  SUM(SUM(total_revenues)) OVER(PARTITION BY semester, city
+                                ORDER BY bimester
+                                ROWS UNBOUNDED PRECEDING)
+  SUM(total_revenues)/COUNT(DISTINCT date)
+  SUM(total_revenues)*100/SUM(SUM(total_revenues)) OVER(PARTITION BY semester, city)
+FROM Fact F, VideoGame V, Store S, Time T
+WHERE F.CodV = V.CodV
+  AND F.CodS = S.CodS
+  AND F.CodT = T.CodT
+  AND forChildren = 1
+GROUP BY city, bimester, semester
+```
