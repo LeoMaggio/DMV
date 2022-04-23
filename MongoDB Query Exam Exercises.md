@@ -67,7 +67,7 @@ Given the following document structure, representing the measurements received b
   "end": Date("2021-02-01T23:00:00.000Z"),
   "sensor": {
     "_id": 1000,
-    "position": {"type": "Point", "coordinates": [-47.9,47.6]},
+    "position": {"type": "Point", "coordinates": [-47.9, 47.6]},
     "elevation": 200,
     "city": "Turin",
     “country”: “Italy”
@@ -170,5 +170,65 @@ db.measures.aggregate([
       ]}
     }
   }
+])
+```
+## September 01, 2021
+The following document structure represents online courses.
+```python
+{
+  "_id": ObjectId(“xyz”),
+  "title": "Python 3.9",
+  "teacher": {
+    "name": "John",
+    "surname": "Doe",
+    "webiste": "https://www.doe.com/",
+    "nation": "USA"
+  },
+  "published": Date("2019-02-13T00:00:00.000Z"),
+  "category": "Computer Science",
+  "tags": ["Python", "Coding"],
+  "price": 99,
+  "avg_score": 4.8,
+  "number_reviews": 47,
+  "enrolled_students": 1234,
+  "details: {
+    "hour_length": 12,
+    "number_of_lessons": 38,
+    "final_test": false
+  }
+}
+```
+Write a MongoDB query to display only the title, the category, and the price of courses containing the tag "Databases", published in 2019, and whose length is less than 10 hours.
+```python
+db.cameras.find(
+  {
+    tag: 'Databases',
+    published: {
+      $gte: new Date('2019-01-01'),
+      $lt: new Date('2020-01-01')
+    },
+    'details.hour_length': {
+      $lt: 10
+    }
+  },
+  {"title": 1, "category": 1, "price": 1, "_id": 0}
+)
+```
+Considering only courses in the category Computer Science published in the year 2020, for each tag, select the average price and the maximum number of enrolled students.
+```python
+db.measures.aggregate([
+  {$match: {
+    "category": "Computer Science",
+    "published": {
+      $gte: new Date("2020-01-01"), 
+      $lte: new Date("2021-01-01")
+    },
+  },
+  {$unwind: "$tags"},
+  {$group: {
+    "_id": "$tags",
+    "avg_price": {"$avg": "$price"},
+    "max_students": {"$max": "$enrolled_students"}
+  }}
 ])
 ```
