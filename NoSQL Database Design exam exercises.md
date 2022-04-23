@@ -323,3 +323,59 @@ review{
 }
 # Extended reference for the review collection to show the hotel info.
 ```
+## January 28, 2022
+Design a MongoDB database to store offers of merchants for a mobile app according to the following requirements.
+- Data to display for each merchant includes the merchant's name, type of merchant (e.g., restaurant, hotel, supermarket), a textual description, the venue, the average rating given by customers, and the contact information.
+- The venue consists of the full address, the city, ZIP code, and country.
+- Contact information includes the phone number and email address. The official website address and the Facebook page might be included in the contact information.
+- Each offer consists of a title, a textual description, a list of categories (e.g., wellness, food, wine), a price in euros, and the validity period (i.e., start and end dates).
+- Each offer is related to a specific merchant. A merchant can have many offers.
+- Given a merchant, the database must be designed to efficiently provide all the data describing the merchant, the number of available offers, and their price range (i.e., min and max prices). Instead, given an offer, the database must efficiently provide the merchant name, the merchant type and its venue information.
+
+Write a sample document for each collection of the database.
+```python
+merchant{
+  _id: ObjectId(),
+  name: <string>,
+  type: <string>,
+  description: <string>,
+  venue: {
+    address: <string>,
+    city: <string>,
+    ZIP: <number>
+    country: <string>
+  },
+  rating: <number>,
+  contact_info: {
+    phone: <string>,
+    email: <string>,
+    website: <url>
+    facebook: <url>
+  },
+  available_offers: <number>,
+  price_range: {min: <number>, max: <number>}
+}
+# Polymorphic pattern to track the contact information in the merchant collection (due to the optional website and facebook info).
+# Computed pattern for the total number of offers and the price range available foreach merchant.
+offer{
+  _id: ObjectId(),
+  title: <string>,
+  description: <string>,
+  categories: [ <string> ],
+  price: <number>,
+  start: <date>, 
+  end: <date>,
+  merchant: {
+    _id: ObjectId(),
+    name: <string>,
+    type: <string>,
+    venue: {
+      address: <string>,
+      city: <string>,
+      ZIP: <number>
+      country: <string>
+    }
+  }
+}
+# Extended reference for the offers collection to show the merchant info.
+```
