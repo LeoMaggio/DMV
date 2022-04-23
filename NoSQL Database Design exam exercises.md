@@ -272,3 +272,54 @@ course: {
 # Bucket pattern to track when a course is provided.
 # Computed pattern for average students on each edition.
 ```
+## September 01, 2021
+Design a MongoDB database to store reviews of hotels from a website according to the following requirements.
+- The data to be displayed on the review website for each hotel include the hotel name, the number of stars, and the list of provided services, e.g., free wifi, baby parking, pet allowed, etc.
+- For each hotel, the venue information and its top 10 reviews must be always shown.
+- The venue information consists of the address, the city, and the country. Furthermore, the official website address might be included in the venue information.
+- Each review consists of a timestamp, a score (e.g., 4.5), the nickname of its author, the number of "likes", and a textual description. Each review is related to one specific hotel.
+- Given a hotel, the database must be designed to efficiently provide all the data describing the hotel, its top 10 reviews (those having the highest numbers of “likes”), its total number of reviews, and their average score.
+- Instead, given a review, the database must efficiently provide the hotel name, its number of stars and its city.
+```python
+hotel{
+  _id: ObjectId(),
+  name: <string>,
+  stars: <number>,
+  services: [ <string> ],
+  venue: {
+    address: <string>,
+    city: <string>,
+    country: <string>,
+    website: <url>
+  },
+  top_reviews : [
+    {_id: ObjectId(),
+     timestamp: <date>,
+     score: <number>,
+     nickname: <string>,
+     likes: <number>,
+     description: <string>
+    }, ...
+  ],
+  tot_reviews: <number>,
+  avg_score: <number>
+}
+# Polymorphic pattern to track the venue information in the hotel collection (due to the optional website info).
+# Subset pattern to track the top 10 reviews for each hotel.
+# Computed pattern for the average score and total review count of each hotel.
+review{
+  _id: ObjectId(),
+  timestamp: <date>,
+  score: <number>,
+  nickname: <string>,
+  likes: <number>,
+  description: <string>,
+  hotel: {
+    id: ObjectId(),
+    name: <string>,
+    stars: <number>,
+    city: <string>,
+  }
+}
+# Extended reference for the review collection to show the hotel info.
+```
