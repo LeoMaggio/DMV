@@ -232,3 +232,50 @@ db.measures.aggregate([
   }}
 ])
 ```
+## January 28, 2021
+The following document structure represents a document of a set of events measuredby a sensor. Each document collects all the measurements of a sensor for a given date.
+```python
+{ "_id": ObjectId("xyz"),
+  "sensor": {
+    "id": 1,
+    "location": {
+      "building": "A"
+      "floor": 1,
+      "type": "bedroom"
+    }
+  },
+  "start”: Date("2022-01-15T00:00:00.000Z"),
+  "measures" : [
+    {"ts": Date("2022-01-15T01:59:59.000Z"), "temperature": 21},
+    {"ts": Date("2022-01-15T23:59:59.000Z"), "temperature": 21.5}
+  ],
+  "n": 2,
+  "sum_temp": 42.5
+}
+```
+Write a MongoDB query to insert a new measure for the sensor 5 acquired on 2021-12-01 at 08:00 with a temperature equal to 19.
+- The document to be updated is related to the sensor 5 and to the set of measures of the day 2021-12-01 (start attribute).
+- Increase also the statistics (i.e., attributes "n" and "sum_temp") stored in the document, which describe the number of measurements and the sum of the temperatures.
+```python
+db.timeserie.updateOne(
+{ 'sensor.id': 5,
+  'start': new Date(2021-12-01T00:00:00.000Z) },
+{ '$push': {'measures': {ts: new Date("2021-12-01T08:00:00.000Z"), “temperature”: 19}},
+  '$inc': {'n':1, ‘sum_temp’: 19} }
+)
+```
+Considering only measurements acquired in June 2021 by sensors located at floor 2, foreach building, select the average and the maximum temperature.
+```python
+db.timeserie.aggregate([
+  {$match: {
+    "sensor.location.floor": 2,
+    "start": {$gte: new Date("2021-06-01"), $lte: new Date("2021-06-30")}
+  }},
+  {$unwind: "$measures"},
+  {$group: {
+    '_id': '$sensor.location.building',
+    'avg_temp': {'$avg': '$measures.temperature'},
+    'max_temp': {'$max': '$measures.temperature'}
+   }}
+])
+```
