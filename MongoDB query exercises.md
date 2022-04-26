@@ -2,7 +2,7 @@
 Given the following collection of books
 ```python
 {
-	_id: ObjectId("5fb29ae15b99900c3fa24292"),
+  _id: ObjectId("5fb29ae15b99900c3fa24292"),
 	title: "MongoDb Guide",
 	tag: ["mongodb", "guide", "database"],
 	n: 100,
