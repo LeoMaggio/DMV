@@ -122,13 +122,9 @@ WHERE C.ObjectID = R.ObjectID
 GROUP BY ObjectID, ObjectType, Month
 ```
 ## 3. Household
-**FACTS**
 ```
-SURFACE (storehouseID, timeID, m2free, m2tot)
-PRODUCTS (storehouseID, timeID, typeID, totNumber, totValue)
-```
-**DIMENSIONS**
-```
+SURFACE(storehouseID, timeID, m2free, m2tot)
+PRODUCTS(storehouseID, timeID, typeID, totNumber, totValue)
 TIME (timeID, date, month, trimester, 4month-period, semester, year)
 TYPES (typeID, type, category)
 STOREHOUSES (storehouseID, storehouse, city, province, region)
@@ -205,15 +201,11 @@ WHERE S.storehouseID = H.storehouseID
 GROUP BY date, month, region
 ```
 ## 4. HouseSearch
-**FACTS**
 ```
 Properties(monthID, weekID, roomsID, furnitureID, locationID,
   numProperties, totPrice, totSurface)
 Favorites(yearID, seasonID, typeID, roomsID, furnitureID, locationID, surfaceRangeID, priceRangeID,
   numUsers, numProperties)
-```
-**DIMENSIONS**
-```
 Week(weekID, week)
 Month(monthID, month, 2m-period, trimester, 4m-period, semester, year)
 Type(typeID, type)
@@ -327,13 +319,9 @@ WHERE P.monthID = M.monthID
 GROUP BY city, month
 ```
 ## 5. Hotel
-**FACTS**
 ```
 Rooms(Features_id, Time_id, Hotel_id, 
   total, free, reserved, unavailable, income)
-```
-**DIMENSIONS**
-```
 Features(Features_id, features, shower, refrigerator, whirpool, satellite_TV)
 Time(Time_id, day, month, holiday, day_of_week, year)
 Hotel(Hotel_id, hotel_name, category, provice, region, state)
@@ -404,15 +392,11 @@ WHERE R.Hotel_id = H.Hotel_id
 GROUP BY R.hotel_id, hotel_name
 ```
 ## 6. PC
-**FACTS**
 ```
 Assembling(timeIdA, componentId, 
   #components, cost, delivery_cost)
 Sales(confId, retId, timeIdS, 
   production_cost, selling_price, #PC_sold, #defective_PC_returned)
-```
-**DIMENSIONS**
-```
 TimeAss(timeIdA, m, 2m, 4m, 6m, year)
 Component(componentId, code, component_type, memory_capacity*, type*, access_time*, resolution*, supplName, supplier_region, supplier_area)
 Configuration(confId, RAM_code, HD_code, CPU_code, graphicBoard_Code, RAM_supplier, HD_supplier, CPU_supplier, graphicBoard_supplier) (or *_code as ids)
