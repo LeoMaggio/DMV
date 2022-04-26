@@ -1,27 +1,37 @@
 # MongoDB query exercises
 Given the following collection of books
 ```python
-{_id: ObjectId("5fb29ae15b99900c3fa24292"),
+{
+	_id: ObjectId("5fb29ae15b99900c3fa24292"),
 	title: "MongoDb Guide",
 	tag: ["mongodb", "guide", "database"],
 	n: 100,
 	review_score: 4.3,
-	price: [{v: 19.99, c: "€", country: "IT"},
-                {v: 18.00, c: "£", country: "UK"}],
-	author: {_id: 1,
-                name: "Mario",
-                surname: "Rossi"}
+	price: [
+		{v: 19.99, c: "€", country: "IT"},
+    {v: 18.00, c: "£", country: "UK"}
+	],
+	author: {
+		_id: 1,
+    name: "Mario",
+    surname: "Rossi"
+	}
 },
-{_id: ObjectId("5fb29b175b99900c3fa24293",
+{
+	_id: ObjectId("5fb29b175b99900c3fa24293",
 	title: "Developing with Python",
 	tag: ["python", "guide", "programming"],
 	n: 352,
 	review_score: 4.6,
-	price: [{v: 24.99, c: "€", country: "IT"},
-                {v: 19.49, c: "£", country: "UK"} ],
-	author: {_id: 2,
-                name: "John",
-                surname: "Black"}
+	price: [
+		{v: 24.99, c: "€", country: "IT"},
+    {v: 19.49, c: "£", country: "UK"}
+	],
+	author: {
+		_id: 2,
+    name: "John",
+    surname: "Black"
+	}
 }, ...
 ```
 #### 1. Find all the books with a number of pages greater than 250
