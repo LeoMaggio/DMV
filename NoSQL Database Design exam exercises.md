@@ -226,6 +226,101 @@ delivery{
   }
 }
 ```
+## September 11, 2020
+Design a document-based NoSQL database for storing the following data describing rental agents and contracts, and specifically optimizing the described access patterns.
+
+An agent is described by the following data.
+- The unique identification SSN (Social Security Number), provided by the Public Administration; it is a short string, such as “ABC-DEF-12A12-A123B”.
+- The name, surname, date of birth, and the historical list of roles (e.g., first enrollment, senior agent, head of area, etc.) together with the start and end dates of each role; please note that each agent can have a specific role only once; the latest role, i.e., the current one, does not have the end date.
+- The list of phone numbers and the type of each number, e.g., mobile, office, fax, etc.; please note that an agent can have more than one number for each type.
+
+A contract is described by the following data.
+- A unique identification string, e.g., “C-2020-09-11-000123”.
+- A type among the different available ones in the national legislation, stored as a descriptive string, e.g., “regulated”, and a reference to the specific law, e.g., “DL-12/2001”.
+- The price of the rental and the corresponding reference period, such as 500 euro per month, or 50 euro per day.
+- The rented property, with a category such as “apartment”, “villa”, “room”, and its address, consisting of street name and number (e.g., “Via Po 12”), city name (e.g., “Torino”), postal code (e.g., 10123), and country name.
+- The date of the contract and its duration (e.g., signed on 2020-09-11, valid for 4 years).
+- The SSN of the renter.
+- The agent that signed the contract.
+
+The access pattern to the above-described data typically consists of a contract list search by agent surname, agent SSN of current role of the agent, then, a contract is selected and fully accessed.
+
+It is often required to filter agents depending on:
+- The number of contracts they signed for each year, in total and separated by property category, e.g., 10 contracts signed in 2020 for “villa” properties, 5 contracts signed in 2019 for “rooms”, etc.
+- The year of birth of the agents.
+- The role they currently have.
+
+It is often required to filter contracts depending on:
+- The signing agent surname, SSN, or current role of the agent.
+- The type of contract.
+- The city of the property.
+
+Provide below a relevant sample document for each collection you design to address the
+described context.
+```python
+agent{
+  "_id": "ABC-DEF-12A12-A123B",
+  "name": "Mario",
+  "surname": "Rossi",
+  "birth": {
+    "year": 1987,
+    "month": 12,
+    "day": 31
+  }
+  "current_role": "senior agent",
+  "roles": {
+    "senior agent": {"from": 31/12/2012},
+    "first enroll": {"from": 01/01/2001, "to": 01/02/2002},
+    ...
+  }
+  "phones": [
+    {"mobile" : ["+39-321-123456, "+39-321-123457"]},
+    {"office" : ["+39-011-123456, "+39-011-123457"]},
+  ],
+  "contracts": {
+    2020: {
+      "total": 20,
+      "villa": 15,
+      "rooms": 5
+    },
+    2019: {
+      "total": 30,
+      "villa": 15,
+      "rooms": 15
+    }
+  }
+}
+contract{
+  "_id": "C-2020-09-11-000123",
+  "type": {
+    "description": "regulated",
+    "law": "DL-12/2001"
+  }
+  "price": {
+    "amount": 500.0,
+    "period": month
+  }
+  "property": {
+    "category": "room",
+    "address": {
+      "street": "Via Po 12",
+      "city": "Turin",
+      "postalCode": 10123,
+      "country": "Italy"
+    }
+  }
+  "validity": {
+    "signed_on": 31/12/2012,
+    "duration_days": 1460
+  }
+  "renter_SSN": "RRR-DEF-12A12-R123R",
+  "agent": {
+    "id": "ABC-DEF-12A12-A123B",
+    "surname": "Rossi",
+    "current_role": "senior agent"
+  }
+}
+```
 ## June 17, 2021
 Design a MongoDB database to manage online courses according to the following requirements.
 - Teachers are characterized by their name, surname, email, and list of subjects they can teach (e.g., maths, electronics, etc.). Each teacher can have one or more online profiles on different platforms (e.g., Facebook, LinkedIn, Wikipedia, etc.). For each online profile, if available, the database tracks the corresponding URL of the profile (e.g., https://en.wikipedia.org/wiki/Ranjitsinh_Disale). Note that for each teacher and each platform, at most one profile can exist. A teacher can teach different courses.
