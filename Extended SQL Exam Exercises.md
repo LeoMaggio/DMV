@@ -128,6 +128,44 @@ WHERE P.TimeID = D.TimeID
   AND P.StoreID = S.StoreID
 GROUP BY brand, month, year
 ```
+## September 11, 2020
+Each restaurant is associated with only one restaurant district. In a district, there can be many restaurants.
+```
+Delivery(TimeID, RestaurantID, DestinationDistrictID, Income, NumberDeliveries)
+Time(TimeID, date, month, 2M, 3M, 4M, 6M, year, dayOfTheWeek)
+Restaurant(RestaurantID, Restaurant, RestaurantDistrict)
+District(DiscrictID, District, City, Region)
+```
+Separately for each restaurant and bimester, compute:
+- the percentage of income of the restaurant, with respect to the total income of its restaurant district
+- the average income for delivery
+- for each restaurant district, assign a rank to to the restaurants based on the income (rank 1st the highest income restaurant), separately for each bimester
+```sql
+SELECT Restaurant, 2M, RestaurantDistrict,
+  SUM(Income)*100/SUM(SUM(Income)) OVER(PARTITION BY RestaurantDistrict, 2M),
+  SUM(Income)/SUM(NumberDeliveries),
+  RANK() OVER(PARTITION BY 2M, RestaurantDistrict
+              ORDER BY SUM(Income) DESC)
+FROM Restaurant R, Delivery D, Time T
+WHERE D.RestaurantID = R.RestaurantID
+  AND D.TimeID = T.TimeID
+GROUP BY RestaurantID, Restaurant, 2M, RestaurantDistrict
+```
+Separately for each month and destination district, compute:
+- the percentage of number of deliveries in each month, with respect to the total of the year
+- the percentage of number of deliveries for destination district, with respect to the total of the destination city
+- the daily average number of deliveries
+```sql
+SELECT month, District, year, city,
+  SUM(NumberDeliveries)*100/SUM(SUM(NumberDeliveries)) OVER(PARTITION BY year, District),
+  SUM(NumberDeliveries)*100/SUM(SUM(NumberDeliveries)) OVER(PARTITION BY month, City),
+  SUM(NumberDeliveries)/COUNT(DISTINCT date)
+FROM Restaurant R, Delivery D, Time T, District DD
+WHERE D.RestaurantID = R.RestaurantID
+  AND D.TimeID = T.TimeID
+  AND D.DestinationDistrictID = DD.DistrictID
+GROUP BY month, DestinationDistrictID, District, year, city
+```
 ## February 01, 2021
 ```
 MusicStreaming(TimeID, SongID, PlatformID, NumberOfStreamings, NumberOfLikes)
