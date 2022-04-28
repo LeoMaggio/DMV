@@ -30,6 +30,7 @@
 db.photos.updateMany( {user: "john", tag: "seaside" }, { $addToSet: {tag: "Riccione"} } )
 ```
 adds the tag “Riccione” to all the photos belonging to the user “john” and having the value “seaside” in the tag list
+
 18. In the MongoDB aggregation pipeline, which stage operator is used to output a new document for each element of an array: `$unwind`
 19. In a master-slave distributed database setting, when the replication is asynchronous: data can be lost even if the master has already committed
 20. Which one of the following answers is a direct consequence of Steven's law? It is important to avoid comparisons between areas
