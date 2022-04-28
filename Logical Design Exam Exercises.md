@@ -1,4 +1,16 @@
 # Logical Design Exam Exercises
+## February 14, 2020
+![DMV_Exam_2020-02-14](img/DMV_Exam_2020-02-14.jpg)
+Provide below the logical design of the conceptual DW schema indicated in the picture.
+```
+GymManager(UserLocationID, TimeID, HourID, GymID, SubscriptionID, numEntrances, numSubscriptions, totRevenues)
+Gym(GymID, gym, LocationID, indoor_pool, outdoor_pool, spa, ..., sauna)
+Time(TimeID, date, month, month_of_the_year, 2M, 3M, 4M, 6M, year, day_of_the_week, holiday)
+Location(LocationID, city, province, region)
+Hour(HourID, hour_of_the_day)
+UserConfig(UserConfigID, age_group, sex)
+Subscription(SubscriptionID, subscriptionType)
+```
 ## June 18, 2020
 Given the following conceptual schema:
 
